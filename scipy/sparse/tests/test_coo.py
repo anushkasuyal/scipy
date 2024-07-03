@@ -161,6 +161,10 @@ def test_nnz():
     assert arr2d.shape == (2, 3)
     assert arr2d.nnz == 3
 
+    arr3d = coo_array([[[1, 2, 0], [0, 0, 3]],[[4, 0, 0], [0, 5, 6]]])
+    assert arr3d.shape == (2, 2, 3)
+    assert arr3d.nnz == 6
+
 
 def test_transpose():
     arr1d = coo_array([1, 0, 3]).T
@@ -170,6 +174,13 @@ def test_transpose():
     arr2d = coo_array([[1, 2, 0], [0, 0, 3]]).T
     assert arr2d.shape == (3, 2)
     assert_equal(arr2d.toarray(), np.array([[1, 0], [2, 0], [0, 3]]))
+
+    arr3d = coo_array([[[1, 2, 0], [0, 0, 3]],[[4, 0, 0], [0, 5, 6]]]).T
+    # assert arr2d.shape == (3, 2)
+    print(arr3d.toarray())
+    # assert_equal(arr2d.toarray(), np.array([[1, 0], [2, 0], [0, 3]]))
+
+    # do we need transpose in nd??
 
 
 def test_transpose_with_axis():
