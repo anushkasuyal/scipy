@@ -176,9 +176,8 @@ def test_transpose():
     assert_equal(arr2d.toarray(), np.array([[1, 0], [2, 0], [0, 3]]))
 
     arr3d = coo_array([[[1, 2, 0], [0, 0, 3]],[[4, 0, 0], [0, 5, 6]]]).T
-    # assert arr2d.shape == (3, 2)
-    print(arr3d.toarray())
-    # assert_equal(arr2d.toarray(), np.array([[1, 0], [2, 0], [0, 3]]))
+    assert arr3d.shape == (3, 2, 2)
+    assert_equal(arr3d.toarray(), np.array([[[1, 4], [0, 0]], [[2, 0], [0, 5]], [[0, 0], [3, 6]]]))
 
     # do we need transpose in nd??
 

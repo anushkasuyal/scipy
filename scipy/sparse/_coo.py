@@ -307,13 +307,23 @@ class _coo_base(_data_matrix, _minmax_mixin):
         fortran = int(B.flags.f_contiguous)
         if not fortran and not B.flags.c_contiguous:
             raise ValueError("Output array must be C or F contiguous")
-        if self.ndim > 2:
+        if self.ndim > 3:
             raise ValueError("Cannot densify higher-rank sparse array")
         # This handles both 0D and 1D cases correctly regardless of the
         # original shape.
-        M, N = self._shape_as_2d
-        coo_todense(M, N, self.nnz, self.row, self.col, self.data,
-                    B.ravel('A'), fortran)
+        if self.ndim < 3 :
+            M, N = self._shape_as_2d
+            coo_todense(M, N, self.nnz, self.row, self.col, self.data,
+                        B.ravel('A'), fortran)
+        
+        if self.ndim == 3:
+            D, M, N = self._shape
+            for d in range(D):
+                mask = (self.coords[0] == d)
+                coo_todense(M, N, np.sum(mask), self.coords[1][mask],
+                            self.coords[2][mask], self.data[mask],
+                            B[d].ravel('A'), fortran)
+                
         # Note: reshape() doesn't copy here, but does return a new array (view).
         return B.reshape(self.shape)
 
