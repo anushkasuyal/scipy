@@ -13,8 +13,12 @@ def test_shape_constructor():
     assert empty2d.shape == (3, 2)
     assert_equal(empty2d.toarray(), np.zeros((3, 2)))
 
+    empty3d = coo_array((4, 3, 2))
+    assert empty3d.shape == (4, 3, 2)
+    assert_equal(empty3d.toarray(), np.zeros((4, 3, 2)))
+
     with pytest.raises(TypeError, match='invalid input format'):
-        coo_array((3, 2, 2))
+        coo_array((3, 2, 2, 2))
 
 
 def test_dense_constructor():
@@ -26,8 +30,12 @@ def test_dense_constructor():
     assert res2d.shape == (2, 3)
     assert_equal(res2d.toarray(), np.array([[1, 2, 3], [4, 5, 6]]))
 
-    with pytest.raises(ValueError, match='shape must be a 1- or 2-tuple'):
-        coo_array([[[3]], [[4]]])
+    res3d = coo_array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]])
+    assert res3d.shape == (2, 2, 3)
+    assert_equal(res3d.toarray(), np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]))
+
+    # with pytest.raises(ValueError, match='shape must be a 1- or 2-tuple'):
+    #     coo_array([[[3]], [[4]]])
 
 
 def test_dense_constructor_with_shape():
@@ -39,8 +47,12 @@ def test_dense_constructor_with_shape():
     assert res2d.shape == (2, 3)
     assert_equal(res2d.toarray(), np.array([[1, 2, 3], [4, 5, 6]]))
 
-    with pytest.raises(ValueError, match='shape must be a 1- or 2-tuple'):
-        coo_array([[[3]], [[4]]], shape=(2, 1, 1))
+    res3d = coo_array([[[3]], [[4]]], shape=(2, 1, 1))
+    assert res3d.shape == (2, 1, 1)
+    assert_equal(res3d.toarray(), np.array([[[3]], [[4]]]))
+
+    # with pytest.raises(ValueError, match='shape must be a 1- or 2-tuple'):
+    #     coo_array([[[3]], [[4]]], shape=(2, 1, 1))
 
 
 def test_dense_constructor_with_inconsistent_shape():
@@ -53,12 +65,22 @@ def test_dense_constructor_with_inconsistent_shape():
     with pytest.raises(ValueError, match='inconsistent shapes'):
         coo_array([[1, 2, 3]], shape=(3,))
 
+    with pytest.raises(ValueError, match='inconsistent shapes'):
+        coo_array([[[3]], [[4]]], shape=(1, 1, 1))
+
     with pytest.raises(ValueError,
                        match='axis 0 index 2 exceeds matrix dimension 2'):
         coo_array(([1], ([2],)), shape=(2,))
 
+    with pytest.raises(ValueError,
+                       match='axis 1 index 3 exceeds matrix dimension 3'):
+        coo_array(([1,3], ([0,1],[0,3],[1,1])), shape=(2,3,2))
+
     with pytest.raises(ValueError, match='negative axis 0 index: -1'):
         coo_array(([1], ([-1],)))
+
+    with pytest.raises(ValueError, match='negative axis 2 index: -1'):
+        coo_array(([1], ([0],[2],[-1])))
 
 
 def test_1d_sparse_constructor():
@@ -91,6 +113,7 @@ def test_non_subscriptability():
         coo_2d[0, :]
 
 def test_reshape():
+    # reshaping 1d sparse arrays
     arr1d = coo_array([1, 0, 3])
     assert arr1d.shape == (3,)
 
@@ -102,12 +125,31 @@ def test_reshape():
     assert row_vec.shape == (1, 3)
     assert_equal(row_vec.toarray(), np.array([[1, 0, 3]]))
 
+    # reshaping 2d sparse arrays
     arr2d = coo_array([[1, 2, 0], [0, 0, 3]])
     assert arr2d.shape == (2, 3)
 
     flat = arr2d.reshape((6,))
     assert flat.shape == (6,)
     assert_equal(flat.toarray(), np.array([1, 2, 0, 0, 0, 3]))
+
+    # reshaping 3d sparse arrays
+    arr3d = coo_array([[[1, 2, 0], [0, 0, 3]],[[4, 0, 0], [0, 5, 6]]])
+    assert arr3d.shape == (2, 2, 3)
+
+    res3d = arr3d.reshape((4,3,1))
+    assert res3d.shape == (4,3,1)
+    assert_equal(res3d.toarray(),
+                np.array([[[1], [2], [0]], [[0], [0], [3]],
+                [[4], [0], [0]], [[0], [5], [6]]]))
+    
+    flat2d = arr3d.reshape((6,2))
+    assert flat2d.shape == (6,2)
+    assert_equal(flat2d.toarray(), np.array([[1, 2], [0, 0], [0, 3], [4, 0], [0, 0], [5,6]]))
+
+    flat1d = arr3d.reshape((12,))
+    assert flat1d.shape == (12,)
+    assert_equal(flat1d.toarray(), np.array([1, 2, 0, 0, 0, 3, 4, 0, 0, 0, 5, 6]))
 
 
 def test_nnz():

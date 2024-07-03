@@ -77,9 +77,9 @@ class _coo_base(_data_matrix, _minmax_mixin):
                 # dense argument
                 M = np.asarray(arg1)
                 if not is_array:
-                    M = np.atleast_2d(M)
-                    if M.ndim != 2:
-                        raise TypeError(f'expected 2D array or matrix, not {M.ndim}D')
+                    M = np.atleast_3d(M)
+                    if M.ndim != 3:
+                        raise TypeError(f'expected 3D array or matrix, not {M.ndim}D')
 
                 self._shape = check_shape(M.shape, allow_1d=is_array)
                 if shape is not None:
@@ -98,6 +98,27 @@ class _coo_base(_data_matrix, _minmax_mixin):
             self.data = self.data.astype(newdtype, copy=False)
 
         self._check()
+
+
+    @property
+    def width(self):
+        if self.ndim > 2:
+            return self.coords[-3]
+        result = np.zeros_like(self.col)
+        result.setflags(write=False)
+        return result
+
+
+    @width.setter
+    def width(self, new_width):
+        if self.ndim < 3:
+            if self.ndim==1:
+                raise ValueError('cannot set row attribute of a 1-dimensional sparse array')
+            if self.ndim==2:
+                raise ValueError('cannot set row attribute of a 2-dimensional sparse array')
+        new_width = np.asarray(new_width, dtype=self.coords[-3].dtype)
+        self.coords = self.coords[:-3] + (new_width,) + self.coords[-2:]
+
 
     @property
     def row(self):
