@@ -245,7 +245,7 @@ def isshape(x, nonneg=False, *, allow_1d=False) -> bool:
     If allow_1d, shapes of length 1 or 2 are allowed.
     """
     ndim = len(x)
-    if ndim != 2 and not (allow_1d and ndim == 1):
+    if ndim != 2 and ndim != 3 and not (allow_1d and ndim == 1):
         return False
     for d in x:
         if not isintlike(d):
@@ -329,8 +329,8 @@ def check_shape(args, current_shape=None, *, allow_1d=False) -> tuple[int, ...]:
 
     if current_shape is None:
         if allow_1d:
-            if len(new_shape) not in (1, 2):
-                raise ValueError('shape must be a 1- or 2-tuple of positive '
+            if len(new_shape) not in (1, 2, 3):
+                raise ValueError('shape must be a 1- or 2- or 3-tuple of positive '
                                  'integers')
         elif len(new_shape) != 2:
             raise ValueError('shape must be a 2-tuple of positive integers')
@@ -359,8 +359,8 @@ def check_shape(args, current_shape=None, *, allow_1d=False) -> tuple[int, ...]:
         else:
             raise ValueError('can only specify one unknown dimension')
 
-    if len(new_shape) != 2 and not (allow_1d and len(new_shape) == 1):
-        raise ValueError('matrix shape must be two-dimensional')
+    if len(new_shape) != 2 and len(new_shape) != 3 and not (allow_1d and len(new_shape) == 1):
+        raise ValueError('matrix shape must be two-dimensional or three-dimensional')
 
     return new_shape
 
