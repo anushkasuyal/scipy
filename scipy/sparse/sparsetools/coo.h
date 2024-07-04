@@ -146,7 +146,7 @@ void coo_todense3d(const I n_depth,
     }
     else {
         for(npy_int64 n = 0; n < nnz; n++){
-            Bx[ (npy_intp)n_row * n_col * Aj[n] + n_row * Ai[n] + Ak[n] ] += Ax[n];
+            Bx[ (npy_intp)n_row * n_depth * Aj[n] + n_depth * Ai[n] + Ak[n] ] += Ax[n];
         }
     }
 }
