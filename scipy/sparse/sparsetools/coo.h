@@ -113,6 +113,47 @@ void coo_todense(const I n_row,
 
 
 /*
+ * Compute B += A for COO matrix A, dense matrix B
+ *
+ * Input Arguments:
+ *   I  n_depth         - number of slices in A
+ *   I  n_row           - number of rows in A
+ *   I  n_col           - number of columns in A
+ *   npy_int64  nnz     - number of nonzeros in A
+ *   I  Ak[nnz(A)]      - depth indices
+ *   I  Ai[nnz(A)]      - row indices
+ *   I  Aj[nnz(A)]      - column indices
+ *   T  Ax[nnz(A)]      - nonzeros 
+ *   T  Bx[n_row*n_col] - dense matrix
+ *
+ */
+template <class I, class T>
+void coo_todense3d(const I n_depth,
+                 const I n_row,
+                 const I n_col,
+                 const npy_int64 nnz,
+                 const I Ak[],
+                 const I Ai[],
+                 const I Aj[],
+                 const T Ax[],
+                       T Bx[],
+                 const int fortran)
+{
+    if (!fortran) {
+        for(npy_int64 n = 0; n < nnz; n++){
+            Bx[ (npy_intp)n_row * n_col * Ak[n] + n_col * Ai[n] + Aj[n] ] += Ax[n];
+        }
+    }
+    else {
+        for(npy_int64 n = 0; n < nnz; n++){
+            Bx[ (npy_intp)n_row * n_col * Aj[n] + n_row * Ai[n] + Ak[n] ] += Ax[n];
+        }
+    }
+}
+
+
+
+/*
  * Compute Y += A*X for COO matrix A and dense vectors X,Y
  *
  *

@@ -11,7 +11,7 @@ import numpy as np
 
 from .._lib._util import copy_if_needed
 from ._matrix import spmatrix
-from ._sparsetools import coo_tocsr, coo_todense, coo_matvec
+from ._sparsetools import coo_tocsr, coo_todense, coo_todense3d, coo_matvec
 from ._base import issparse, SparseEfficiencyWarning, _spbase, sparray
 from ._data import _data_matrix, _minmax_mixin
 from ._sputils import (upcast_char, to_native, isshape, getdtype,
@@ -101,7 +101,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
 
 
     @property
-    def width(self):
+    def depth(self):
         if self.ndim > 2:
             return self.coords[-3]
         result = np.zeros_like(self.col)
@@ -109,15 +109,15 @@ class _coo_base(_data_matrix, _minmax_mixin):
         return result
 
 
-    @width.setter
-    def width(self, new_width):
+    @depth.setter
+    def depth(self, new_depth):
         if self.ndim < 3:
             if self.ndim==1:
-                raise ValueError('cannot set row attribute of a 1-dimensional sparse array')
+                raise ValueError('cannot set depth attribute of a 1-dimensional sparse array')
             if self.ndim==2:
-                raise ValueError('cannot set row attribute of a 2-dimensional sparse array')
-        new_width = np.asarray(new_width, dtype=self.coords[-3].dtype)
-        self.coords = self.coords[:-3] + (new_width,) + self.coords[-2:]
+                raise ValueError('cannot set depth attribute of a 2-dimensional sparse array')
+        new_depth = np.asarray(new_depth, dtype=self.coords[-3].dtype)
+        self.coords = self.coords[:-3] + (new_depth,) + self.coords[-2:]
 
 
     @property
@@ -312,17 +312,20 @@ class _coo_base(_data_matrix, _minmax_mixin):
         # This handles both 0D and 1D cases correctly regardless of the
         # original shape.
         if self.ndim < 3 :
-            M, N = self._shape_as_2d
+            D, M, N = self._shape_as_3d
             coo_todense(M, N, self.nnz, self.row, self.col, self.data,
                         B.ravel('A'), fortran)
         
         if self.ndim == 3:
             D, M, N = self._shape
-            for d in range(D):
-                mask = (self.coords[0] == d)
-                coo_todense(M, N, np.sum(mask), self.coords[1][mask],
-                            self.coords[2][mask], self.data[mask],
-                            B[d].ravel('A'), fortran)
+            coo_todense3d(D, M, N, self.nnz, self.depth, self.row, self.col, self.data,
+                        B.ravel('A'), fortran)
+            # D, M, N = self._shape
+            # for d in range(D):
+            #     mask = (self.coords[0] == d)
+            #     coo_todense(M, N, np.sum(mask), self.coords[1][mask],
+            #                 self.coords[2][mask], self.data[mask],
+            #                 B[d].ravel('A'), fortran)
                 
         # Note: reshape() doesn't copy here, but does return a new array (view).
         return B.reshape(self.shape)

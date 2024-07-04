@@ -13,6 +13,7 @@ __all__ = [  # noqa: F822
     'coo_matvec',
     'coo_tocsr',
     'coo_todense',
+    'coo_todense3d'
     'downcast_intp_index',
     'getdata',
     'getdtype',

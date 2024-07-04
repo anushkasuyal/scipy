@@ -75,6 +75,12 @@ class _spbase:
         s = self._shape
         return (1, s[-1]) if len(s) == 1 else s
 
+    # added so that coo_todense can be extended to 3d
+    @property
+    def _shape_as_3d(self):
+        s = self._shape
+        return (1, 1, s[-1]) if len(s) == 1 else (1, s[-2], s[-1]) if len(s) == 2 else s
+
     @property
     def _bsr_container(self):
         from ._bsr import bsr_array
