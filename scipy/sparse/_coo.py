@@ -196,8 +196,8 @@ class _coo_base(_data_matrix, _minmax_mixin):
             axis += self.ndim
         if axis >= self.ndim:
             raise ValueError('axis out of bounds')
-        if self.ndim > 2:
-            raise NotImplementedError('per-axis nnz for COO arrays with >2 '
+        if self.ndim > 3:
+            raise NotImplementedError('per-axis nnz for COO arrays with >3 '
                                       'dimensions is not supported')
         return np.bincount(downcast_intp_index(self.coords[1 - axis]),
                            minlength=self.shape[1 - axis])
@@ -309,7 +309,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
             raise ValueError("Output array must be C or F contiguous")
         if self.ndim > 3:
             raise ValueError("Cannot densify higher-rank sparse array")
-        # This handles both 0D and 1D cases correctly regardless of the
+        # This handles 0D, 1D, and 2D cases correctly regardless of the
         # original shape.
         D, M, N = self._shape_as_3d
         coo_todense3d(D, M, N, self.nnz, self.depth, self.row, self.col, self.data,
@@ -578,10 +578,31 @@ class _coo_base(_data_matrix, _minmax_mixin):
         dtype = upcast_char(self.dtype.char, other.dtype.char)
         result = np.array(other, dtype=dtype, copy=True)
         fortran = int(result.flags.f_contiguous)
-        M, N = self._shape_as_2d
-        coo_todense(M, N, self.nnz, self.row, self.col, self.data,
+        D, M, N = self._shape_as_3d
+        coo_todense3d(D, M, N, self.nnz, self.depth, self.row, self.col, self.data,
                     result.ravel('A'), fortran)
         return self._container(result, copy=False)
+
+
+    def _add_sparse(self, other):
+        if other.shape != self.shape:
+            raise ValueError(f'Incompatible shapes ({self.shape} and {other.shape})')
+        other = self.__class__(other)
+        new_data = np.concatenate((self.data, other.data))
+        new_coords = np.concatenate((self.coords, other.coords), axis=1)
+        A = coo_array((new_data, new_coords), shape=self.shape)
+        return A
+    
+
+    # def _sub_sparse(self, other):
+    #     if other.shape != self.shape:
+    #         raise ValueError(f'Incompatible shapes ({self.shape} and {other.shape})')
+    #     other = self.__class__(other)
+    #     new_data = np.concatenate((self.data, other.data))
+    #     new_coords = np.concatenate((self.coords, other.coords), axis=1)
+    #     A = coo_array((new_data, new_coords), shape=self.shape)
+    #     return A
+    
 
     def _matmul_vector(self, other):
         result_shape = self.shape[0] if self.ndim > 1 else 1

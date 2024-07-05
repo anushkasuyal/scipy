@@ -530,13 +530,23 @@ class _spbase:
         return round(self.tocsr(), ndigits=ndigits)
 
     def _add_sparse(self, other):
-        return self.tocsr()._add_sparse(other)
+        if self.ndim<3:
+            # routes through CSR format for dim < 3
+            return self.tocsr()._add_sparse(other)
+        else:
+            # adds in COO format for dim = 3
+            return self._add_sparse(other)
 
     def _add_dense(self, other):
         return self.tocoo()._add_dense(other)
 
     def _sub_sparse(self, other):
-        return self.tocsr()._sub_sparse(other)
+        if self.ndim<3:
+            # routes through CSR format for dim < 3
+            return self.tocsr()._sub_sparse(other)
+        else:
+            # adds in COO format for dim = 3
+            return self._sub_sparse(other)
 
     def _sub_dense(self, other):
         return self.todense() - other
