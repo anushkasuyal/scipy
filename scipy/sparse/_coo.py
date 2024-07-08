@@ -594,14 +594,14 @@ class _coo_base(_data_matrix, _minmax_mixin):
         return A
     
 
-    # def _sub_sparse(self, other):
-    #     if other.shape != self.shape:
-    #         raise ValueError(f'Incompatible shapes ({self.shape} and {other.shape})')
-    #     other = self.__class__(other)
-    #     new_data = np.concatenate((self.data, other.data))
-    #     new_coords = np.concatenate((self.coords, other.coords), axis=1)
-    #     A = coo_array((new_data, new_coords), shape=self.shape)
-    #     return A
+    def _sub_sparse(self, other):
+        if other.shape != self.shape:
+            raise ValueError(f'Incompatible shapes ({self.shape} and {other.shape})')
+        other = self.__class__(other)
+        new_data = np.concatenate((self.data, -(other.data)))
+        new_coords = np.concatenate((self.coords, other.coords), axis=1)
+        A = coo_array((new_data, new_coords), shape=self.shape)
+        return A
     
 
     def _matmul_vector(self, other):
