@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.testing import assert_equal
 import pytest
-from scipy.sparse import coo_array, random_array
+from scipy.sparse import coo_array, random_array, random
 
 
 def test_shape_constructor():
@@ -570,3 +570,13 @@ def test_1d_diagonal():
     den = np.array([0, -2, -3, 0])
     with pytest.raises(ValueError, match='diagonal requires two dimensions'):
         coo_array(den).diagonal()
+
+def testm():
+    np.random.seed(12)
+    # Generate the sparse matrix
+    arr_a = random(2, 3, density=0.3, data_rvs=lambda s: np.random.randint(2, 50, s), dtype=int)
+    arr_b = random(3, 2, density=0.6, data_rvs=lambda s: np.random.randint(2, 50, s), dtype=int)
+
+    res = arr_a @ arr_b
+    exp = arr_a.toarray() @ arr_b.toarray()
+    assert_equal(res.toarray(), exp)

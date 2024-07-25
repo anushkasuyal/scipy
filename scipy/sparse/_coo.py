@@ -611,6 +611,43 @@ class _coo_base(_data_matrix, _minmax_mixin):
         A = coo_array((new_data, new_coords), shape=self.shape)
         return A
     
+    
+    def _matmul_sparse(self, other):
+        R = np.array(self.coords).T
+        S = np.array(other.coords).T
+
+        # Sorting S based on its row indices
+        sort_indices = np.argsort(S[:, 0])
+        S_sorted = S[sort_indices]
+        S_data_sorted = other.data[sort_indices]
+
+        # Finding the start and end positions for each column index in R
+        start_indices = np.searchsorted(S_sorted[:, 0], R[:, 1], side='left')
+        end_indices = np.searchsorted(S_sorted[:, 0], R[:, 1], side='right')
+
+        # Create an index array to cover the range between start and end for each R element
+        mask = start_indices < end_indices
+        valid_starts = start_indices[mask]
+        valid_ends = end_indices[mask]
+        valid_R = R[mask]
+        valid_data = self.data[mask]
+    
+        lengths = valid_ends - valid_starts
+        all_indices = np.arange(lengths.sum())
+        repeated_indices = np.repeat(valid_starts, lengths) + all_indices - np.repeat(np.cumsum(lengths) - lengths, lengths)
+    
+        # flattened arrays for R and S
+        rows_to_add = np.repeat(valid_R[:, 0], lengths)
+        cols_to_add = S_sorted[repeated_indices, 1]
+        data_to_add = valid_data.repeat(lengths) * S_data_sorted[repeated_indices]
+
+        # create the result sparse matrix
+        coords = np.vstack((rows_to_add, cols_to_add))
+        res_arr = coo_matrix((data_to_add, coords), shape=(self.shape[0], other.shape[1]))
+
+        # sum duplicates
+        res_arr.sum_duplicates()
+        return res_arr
 
     def _matmul_vector(self, other):
         if self.ndim < 3:
