@@ -574,9 +574,31 @@ def test_1d_diagonal():
 def testm():
     np.random.seed(12)
     # Generate the sparse matrix
-    arr_a = random(2, 3, density=0.3, data_rvs=lambda s: np.random.randint(2, 50, s), dtype=int)
-    arr_b = random(3, 2, density=0.6, data_rvs=lambda s: np.random.randint(2, 50, s), dtype=int)
+    arr_a = coo_array(np.array([[[0, 1],
+        [2, 0],
+        [0, 3]],
 
-    res = arr_a @ arr_b
+       [[4, 0],
+        [0, 2],
+        [1, 2]],
+
+       [[5, 0],
+        [0, 4],
+        [2, 0]]]))
+    arr_b = coo_array(np.array([[[3, 0, 0, 2],
+        [0, 1, 2, 0]],
+
+       [[4, 0, 4, 0],
+        [2, 1, 2, 0]],
+
+       [[0, 3, 4, 0],
+        [3, 1, 0, 3]]]))
+    
     exp = arr_a.toarray() @ arr_b.toarray()
+
+    res = arr_a._matmul_sparse(arr_b)
+    print(res.toarray())
+    print(res.shape)
+    print(exp)
+    print(exp.shape)
     assert_equal(res.toarray(), exp)
