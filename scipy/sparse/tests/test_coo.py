@@ -570,3 +570,26 @@ def test_1d_diagonal():
     den = np.array([0, -2, -3, 0])
     with pytest.raises(ValueError, match='diagonal requires two dimensions'):
         coo_array(den).diagonal()
+
+
+def test_dot():
+    # Example Usage
+    a_coords = np.array([[0, 1, 2], [1, 0, 1], [0, 2, 1], [0,1,2]])  # Example coordinates for a 3D COO array
+    a_data = np.array([1, 2, 3])
+    a_shape = (3, 3, 4,3)
+    
+    b_coords = np.array([[0, 1, 2], [0, 1, 2], [0, 2, 1], [2,1,1]])  # Example coordinates for another 3D COO array
+    b_data = np.array([4, 5, 6])
+    b_shape = (3, 3, 3,4)
+    
+    a = coo_array(np.random.randint(0, 4, size=(2, 2, 3, 5)), (2, 2, 3, 5))
+    b = coo_array(np.random.randint(0, 4, size=( 2, 5, 2)), (2, 5, 2))
+    
+    axes_a = [3]
+    axes_b = [1]
+    x = (np.tensordot(a.toarray(), b.toarray(), axes=[axes_a,axes_b]))
+    print(x)
+    print(coo_array(x))
+    dotprod = a.dot(b, axes_a, axes_b)
+
+    assert_equal(x, dotprod.toarray())
