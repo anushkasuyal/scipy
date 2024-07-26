@@ -611,52 +611,107 @@ class _coo_base(_data_matrix, _minmax_mixin):
         A = coo_array((new_data, new_coords), shape=self.shape)
         return A
     
-    def _matmul_sparse(self, other):
-        # Unpack dimensions
-        dim_A = len(self.coords) - 1  # All dimensions except the last one (row)
-        dim_B = len(other.coords) - 1  # All dimensions except the first one (col)
-        
-        # Convert coordinates to arrays
-        R = np.array(self.coords).T
-        S = np.array(other.coords).T
-        
-        # Sorting S based on its first dimension indices (for matching with last dimension of R)
-        sort_indices = np.argsort(S[:, 0])
-        S_sorted = S[sort_indices]
-        S_data_sorted = other.data[sort_indices]
 
-        # Finding the start and end positions for each matching index in R
-        start_indices = np.searchsorted(S_sorted[:, 0], R[:, -1], side='left')
-        end_indices = np.searchsorted(S_sorted[:, 0], R[:, -1], side='right')
+
+    # def _matmul_sparse(self, other):
+    #     # Compute the shape of the reshaped matrices
+    #     A_shape = self.shape
+    #     B_shape = other.shape
         
-        # Create a mask for valid matches
-        mask = start_indices < end_indices
-        valid_starts = start_indices[mask]
-        valid_ends = end_indices[mask]
-        valid_R = R[mask]
-        valid_data = self.data[mask]
+    #     # Compute the 2D shapes
+    #     A_2d_shape = (np.prod(A_shape[:-1]), A_shape[-1])
+    #     B_2d_shape = (B_shape[0], np.prod(B_shape[1:]))
         
-        # Calculate lengths of each segment to be matched
-        lengths = valid_ends - valid_starts
-        all_indices = np.arange(lengths.sum())
-        repeated_indices = np.repeat(valid_starts, lengths) + all_indices - np.repeat(np.cumsum(lengths) - lengths, lengths)
+    #     # Convert the coordinates and data of the sparse matrices to 2D
+    #     R_2d_coords = np.array(self.coords).T
+    #     S_2d_coords = np.array(other.coords).T
         
-        # Flattened arrays for valid matching coordinates
-        rows_to_add = np.repeat(valid_R[:, :-1], lengths, axis=0)
-        cols_to_add = S_sorted[repeated_indices, -1]
-        data_to_add = valid_data.repeat(lengths) * S_data_sorted[repeated_indices]
+    #     # Reshape the coordinates to 2D
+    #     R_2d = np.hstack([R_2d_coords[:, :-1].reshape(-1, A_2d_shape[0]), R_2d_coords[:, -1].reshape(-1, 1)])
+    #     S_2d = np.hstack([S_2d_coords[:, 0].reshape(-1, 1), S_2d_coords[:, 1:].reshape(-1, B_2d_shape[1])])
         
-        # Combine the coordinates
-        coords = np.vstack([*(rows_to_add.T), cols_to_add])
+    #     # Create COO sparse matrices from the reshaped coordinates and data
+    #     A_2d = coo_matrix((self.data, (R_2d[:, 0], R_2d[:, 1])), shape=A_2d_shape)
+    #     B_2d = coo_matrix((other.data, (S_2d[:, 0], S_2d[:, 1])), shape=B_2d_shape)
         
-        # Create the resulting sparse matrix
-        shape = np.broadcast_shapes(self.shape[:-2], other.shape[:-2])
-        res_arr = coo_array((data_to_add, coords), shape=(*shape,self.shape[-2], other.shape[-1]))
+    #     # Perform 2D sparse matrix multiplication
+    #     result_2d = A_2d.dot(B_2d)
         
-        # Sum duplicates
-        res_arr.sum_duplicates()
+    #     # Convert the result back to n-dimensional coordinates and data
+    #     result_data = result_2d.data
+    #     result_coords = np.vstack([result_2d.row.reshape(-1, 1), result_2d.col.reshape(-1, 1)])
         
-        return res_arr
+    #     # Reshape the coordinates to the original n-dimensional shape
+    #     result_coords_nd = np.hstack([
+    #         result_coords[:, 0].reshape(-1, *A_shape[:-1]), 
+    #         result_coords[:, 1].reshape(-1, *B_shape[1:])
+    #     ])
+        
+    #     # Create the resulting sparse matrix in n-dimensional format
+    #     result_shape_nd = (*A_shape[:-1], *B_shape[1:])
+    #     result_nd = coo_matrix((result_data, result_coords_nd), shape=result_shape_nd)
+        
+    #     # Sum duplicates in the resulting sparse matrix
+    #     result_nd.sum_duplicates()
+        
+    #     return result_nd
+
+    # def _broadcasting(a,b):
+    #     if a.ndim < b.ndim:
+    #         a = a[(None,) * (b.ndim - a.ndim)]
+    #     if a.ndim > b.ndim:
+    #         b = b[(None,) * (a.ndim - b.ndim)]
+    #     for i, j in zip(a.shape[:-2], b.shape[:-2], strict=True):
+    #         if i != 1 and j != 1 and i != j:
+    #             raise ValueError("shapes of a and b are not broadcastable")
+            
+    #     def _matmul_recurser(a, b):
+    #         if a.ndim == 2:
+    #             return a.dot(b)
+    #         res = []
+    #         for i in range(max(a.shape[0], b.shape[0])):
+    #             if a.shape[0] == 1:
+    #                 a_i = a
+    #             else:
+    #                 a_i = coo_array((a.data[i:i+1], tuple(np.array(a.coords[1:])[:, i:i+1])), a.shape[1:])
+    #             if b.shape[0] == 1:
+    #                 b_i = b
+    #             else:
+    #                 b_i = coo_array((b.data[i:i+1], tuple(np.array(b.coords[1:])[:, i:i+1])), b.shape[1:])
+    #             res.append(_matmul_recurser(a_i, b_i))
+    #         mask = [isinstance(x, sparray) for x in res]
+    #         if all(mask):
+    #             return np.stack(res)
+
+    #         res = [x.todense() if isinstance(x, sparray) else x for x in res]
+    #         return np.stack(res)
+    #     return _matmul_recurser(a, b)
+    
+    # def _dot(self, other):
+    #     out_shape = (a.shape[0], b.shape[1])
+    #     # convert to csr
+    #     a_indptr = np.empty(self.shape[0] + 1, dtype=np.intp)
+    #     a_indptr[0] = 0
+    #     np.cumsum(np.bincount(self.coords[0], minlength=self.shape[0]), out=a_indptr[1:])
+
+    #     b_indptr = np.empty(other.shape[0] + 1, dtype=np.intp)
+    #     b_indptr[0] = 0
+    #     np.cumsum(np.bincount(other.coords[0], minlength=other.shape[0]), out=b_indptr[1:])
+    #     coords, data = _dot_coo_coo_type(self.dtype, b.dtype)(
+    #         out_shape, a.coords, b.coords, a.data, b.data, a_indptr, b_indptr
+    #     )
+    #     out = coo_array(coords, data, shape=out_shape)
+    
+    # def dot(a, b):
+    #     a_axis = -1
+    #     b_axis = -2
+
+    #     if b.ndim == 1:
+    #         b_axis = -1
+    #     return tensordot(a, b, axes=(a_axis, b_axis))
+
+
+        
 
     # def _matmul_sparse(self, other):
     #     R = np.array(self.coords).T  # Convert the coordinates to a transposed array
