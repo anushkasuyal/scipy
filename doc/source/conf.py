@@ -48,7 +48,6 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.intersphinx',
     'numpydoc',
-    'sphinx_copybutton',
     'sphinx_design',
     'scipyoptdoc',
     'doi_role',
@@ -185,10 +184,6 @@ warnings.filterwarnings(
     message=r'There is no current event loop',
     category=DeprecationWarning,
 )
-# See https://github.com/sphinx-doc/sphinx/issues/12589
-suppress_warnings = [
-    'autosummary.import_cycle',
-]
 
 # -----------------------------------------------------------------------------
 # HTML output
@@ -200,7 +195,7 @@ html_logo = '_static/logo.svg'
 html_favicon = '_static/favicon.ico'
 
 html_sidebars = {
-    "index": ["search-button-field"],
+    "index": "search-button-field",
     "**": ["search-button-field", "sidebar-nav-bs"]
 }
 
@@ -268,10 +263,6 @@ html_file_suffix = '.html'
 htmlhelp_basename = 'scipy'
 
 mathjax_path = "scipy-mathjax/MathJax.js?config=scipy-mathjax"
-
-# sphinx-copybutton configurations
-copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.{3,}: | {5,8}: "
-copybutton_prompt_is_regexp = True
 
 # -----------------------------------------------------------------------------
 # Intersphinx configuration

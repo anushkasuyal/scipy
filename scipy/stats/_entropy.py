@@ -319,8 +319,6 @@ def differential_entropy(
     """
     xp = array_namespace(values)
     values = xp.asarray(values)
-    if xp.isdtype(values.dtype, "integral"):  # type: ignore[union-attr]
-        values = xp.astype(values, xp.asarray(1.).dtype)
     values = xp_moveaxis_to_end(values, axis, xp=xp)
     n = values.shape[-1]  # type: ignore[union-attr]
 
@@ -361,9 +359,7 @@ def differential_entropy(
     if base is not None:
         res /= math.log(base)
 
-    # avoid dtype changes due to data-apis/array-api-compat#152
-    # can be removed when data-apis/array-api-compat#152 is resolved
-    return xp.astype(res, values.dtype)  # type: ignore[union-attr]
+    return res
 
 
 def _pad_along_last_axis(X, m, *, xp):

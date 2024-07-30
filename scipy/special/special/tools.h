@@ -12,8 +12,7 @@ namespace detail {
      * each time it is called.
      */
     template <typename Generator>
-    using generator_result_t = typename std::decay<typename std::invoke_result<Generator>::type>::type;
-
+    using generator_result_t = std::decay_t<std::invoke_result_t<Generator>>;
 
     /* Used to deduce the type of the numerator/denominator of a fraction. */
     template <typename Pair>
@@ -43,12 +42,12 @@ namespace detail {
 
     // Return NaN, handling both real and complex types.
     template <typename T>
-    SPECFUN_HOST_DEVICE inline typename std::enable_if<std::is_floating_point<T>::value, T>::type maybe_complex_NaN() {
+    SPECFUN_HOST_DEVICE inline std::enable_if_t<std::is_floating_point_v<T>, T> maybe_complex_NaN() {
         return std::numeric_limits<T>::quiet_NaN();
     }
 
     template <typename T>
-    SPECFUN_HOST_DEVICE inline typename std::enable_if<!std::is_floating_point<T>::value, T>::type maybe_complex_NaN() {
+    SPECFUN_HOST_DEVICE inline std::enable_if_t<!std::is_floating_point_v<T>, T> maybe_complex_NaN() {
         using V = typename T::value_type;
         return {std::numeric_limits<V>::quiet_NaN(), std::numeric_limits<V>::quiet_NaN()};
     }
@@ -220,18 +219,18 @@ namespace detail {
     class ContinuedFractionSeriesGenerator {
 
     public:
-        SPECFUN_HOST_DEVICE explicit ContinuedFractionSeriesGenerator(Generator &cf) : cf_(cf) {
+        explicit ContinuedFractionSeriesGenerator(Generator &cf) : cf_(cf) {
             init();
         }
 
-        SPECFUN_HOST_DEVICE double operator()() {
+        double operator()() {
             double v = v_;
             advance();
             return v;
         }
 
     private:
-        SPECFUN_HOST_DEVICE void init() {
+        void init() {
             auto [num, denom] = cf_();
             T a = num;
             T b = denom;
@@ -240,7 +239,7 @@ namespace detail {
             b_ = b;
         }
 
-        SPECFUN_HOST_DEVICE void advance() {
+        void advance() {
             auto [num, denom] = cf_();
             T a = num;
             T b = denom;

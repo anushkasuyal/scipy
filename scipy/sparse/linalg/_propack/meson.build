@@ -32,7 +32,6 @@ d_src = [
 ]
 
 c_src = [
-  'PROPACK/complex8/ccdotc.F',
   'PROPACK/complex8/cblasext.F',
   'PROPACK/complex8/cgemm_ovwr.F',
   'PROPACK/complex8/cgetu0.F',
@@ -53,7 +52,6 @@ z_src = [
   'PROPACK/complex16/dbsvd.F',
   'PROPACK/complex16/dgemm_ovwr.F',
   'PROPACK/complex16/printstat.F',
-  '../_eigen/arpack/ARPACK/SRC/zzdotc.f',
   'PROPACK/complex16/zblasext.F',
   'PROPACK/complex16/zgemm_ovwr.F',
   'PROPACK/complex16/zgetu0.F',
@@ -91,7 +89,7 @@ foreach ele: elements
     ele[1],
     fortran_args: [
       fargs_propack,
-      fortran_ignore_warnings,
+      fortran_ignore_warnings, 
       _fflag_Wno_intrinsic_shadow,
       _fflag_Wno_uninitialized,
       _fflag_fpp,

@@ -46,7 +46,6 @@ PUBLIC_SUBMODULES = [
     'cluster.vq',
     'constants',
     'datasets',
-    'differentiate',
     'fft',
     'fftpack',
     'fftpack.convolve',

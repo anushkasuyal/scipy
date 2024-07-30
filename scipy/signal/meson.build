@@ -70,7 +70,8 @@ endforeach
 
 py3.extension_module('_spline',
   [
-    '_splinemodule.cc',
+    '_splinemodule.c',
+    tempita_gen.process('_bspline_util.c.in'),
   ],
   dependencies: np_dep,
   link_args: version_link_args,
@@ -81,7 +82,7 @@ py3.extension_module('_spline',
 py3.install_sources([
     '__init__.py',
     '_arraytools.py',
-    '_spline_filters.py',
+    '_bsplines.py',
     '_czt.py',
     '_filter_design.py',
     '_fir_filter_design.py',
@@ -94,6 +95,7 @@ py3.install_sources([
     '_signaltools.py',
     '_spectral_py.py',
     '_spline.pyi',
+    '_splines.py',
     '_upfirdn.py',
     '_waveforms.py',
     '_wavelets.py',

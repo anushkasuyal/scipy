@@ -47,9 +47,6 @@ py3.extension_module('_cytest',
 
 python_sources = [
   '__init__.py',
-  '_ndimage_api.py',
-  '_dispatchers.py',
-  '_support_alternative_backends.py',
   '_filters.py',
   '_fourier.py',
   '_interpolation.py',

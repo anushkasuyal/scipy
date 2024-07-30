@@ -103,8 +103,6 @@ change is made.
 
 * `scipy.datasets`
 
-* `scipy.differentiate`
-
 * `scipy.fft`
 
 * `scipy.fftpack`
@@ -170,7 +168,6 @@ change is made.
    scipy.cluster <cluster>
    scipy.constants <constants>
    scipy.datasets <datasets>
-   scipy.differentiate <differentiate>
    scipy.fft <fft>
    scipy.fftpack <fftpack>
    scipy.integrate <integrate>

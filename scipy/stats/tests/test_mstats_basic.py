@@ -1865,8 +1865,7 @@ class TestCompareWithStats:
         xm = np.ma.array(tmp, mask=mask)
         x_orig, xm_orig = x.copy(), xm.copy()
 
-        unique, unique_counts = np.unique(x, return_counts=True)
-        r = unique[unique_counts > 1], unique_counts[unique_counts > 1]
+        r = stats.find_repeats(x)
         rm = stats.mstats.find_repeats(xm)
 
         assert_equal(r, rm)

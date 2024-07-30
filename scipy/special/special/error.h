@@ -1,5 +1,13 @@
 #pragma once
 
+// should be included from config.h, but that won't work until we've cleanly separated out the C and C++ parts of the
+// code
+#ifdef __CUDACC__
+#define SPECFUN_HOST_DEVICE __host__ __device__
+#else
+#define SPECFUN_HOST_DEVICE
+#endif
+
 typedef enum {
     SF_ERROR_OK = 0,    /* no error */
     SF_ERROR_SINGULAR,  /* singularity encountered */
@@ -16,7 +24,7 @@ typedef enum {
 
 #ifdef __cplusplus
 
-#include "config.h"
+#include <complex>
 
 namespace special {
 
@@ -29,7 +37,7 @@ void set_error(const char *func_name, sf_error_t code, const char *fmt, ...);
 #endif
 
 template <typename T>
-SPECFUN_HOST_DEVICE void set_error_and_nan(const char *name, sf_error_t code, T &value) {
+void set_error_and_nan(const char *name, sf_error_t code, T &value) {
     if (code != SF_ERROR_OK) {
         set_error(name, code, nullptr);
 
@@ -40,7 +48,7 @@ SPECFUN_HOST_DEVICE void set_error_and_nan(const char *name, sf_error_t code, T 
 }
 
 template <typename T>
-SPECFUN_HOST_DEVICE void set_error_and_nan(const char *name, sf_error_t code, std::complex<T> &value) {
+void set_error_and_nan(const char *name, sf_error_t code, std::complex<T> &value) {
     if (code != SF_ERROR_OK) {
         set_error(name, code, nullptr);
 

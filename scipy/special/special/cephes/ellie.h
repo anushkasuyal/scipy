@@ -58,7 +58,6 @@
 #include "../config.h"
 #include "const.h"
 #include "ellpe.h"
-#include "ellpk.h"
 #include "unity.h"
 
 namespace special {
@@ -247,7 +246,7 @@ namespace cephes {
             e = 1.0 / (b * t);
             /* ... but avoid multiple recursions.  */
             if (std::abs(e) < 10.0) {
-                e = std::atan(e);
+                e = atan(e);
                 temp = E + m * std::sin(lphi) * std::sin(e) - ellie(e, m);
                 goto done;
             }
