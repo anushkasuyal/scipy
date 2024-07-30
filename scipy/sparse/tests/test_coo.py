@@ -534,6 +534,7 @@ def test_1d_matmul_multivector():
     exp = den @ other
     res = coo_array(den) @ other
     assert type(res) is type(exp)
+    assert type(res) is type(exp)
     assert_equal(res, exp)
 
 

@@ -12,7 +12,7 @@ import numpy as np
 from .._lib._util import copy_if_needed
 from ._matrix import spmatrix
 from ._sparsetools import (coo_tocsr, coo_todense, coo_todense_nd,
-                           coo_matvec, coo_matvec_nd)
+                           coo_matvec, coo_matvec_nd, coo_matmat_dense)
 from ._base import issparse, SparseEfficiencyWarning, _spbase, sparray
 from ._data import _data_matrix, _minmax_mixin
 from ._sputils import (upcast_char, to_native, isshape, getdtype,
