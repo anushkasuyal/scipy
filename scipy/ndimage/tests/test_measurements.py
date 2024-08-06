@@ -18,10 +18,6 @@ import scipy.ndimage as ndimage
 
 from . import types
 
-from scipy.conftest import array_api_compatible
-skip_xp_backends = pytest.mark.skip_xp_backends
-pytestmark = [array_api_compatible, pytest.mark.usefixtures("skip_xp_backends"),
-              skip_xp_backends(cpu_only=True, exceptions=['cupy', 'jax.numpy'],)]
 
 class Test_measurements_stats:
     """ndimage._measurements._stats() is a utility used by other functions."""
@@ -352,10 +348,8 @@ def test_label_structuring_elements():
             assert_equal(ndimage.label(d, s)[0], results[r, :, :])
             r += 1
 
-@skip_xp_backends("cupy",
-                  reasons=["`cupyx.scipy.ndimage` does not have `find_objects`"],
-                  cpu_only=True, exceptions=['cupy', 'jax.numpy'],)
-def test_ticket_742(xp):
+
+def test_ticket_742():
     def SE(img, thresh=.7, size=4):
         mask = img > thresh
         rank = len(mask.shape)
@@ -381,16 +375,12 @@ def test_gh_issue_3025():
     assert ndimage.label(d, np.ones((3, 3)))[1] == 1
 
 
-@skip_xp_backends("cupy", reasons=["cupyx.scipy.ndimage does not have find_object"],
-                  cpu_only=True, exceptions=['cupy', 'jax.numpy'],)
-class TestFindObjects:
-    def test_label_default_dtype(self, xp):
-        test_array = np.random.rand(10, 10)
-        test_array = xp.asarray(test_array)
-        label, no_features = ndimage.label(test_array > 0.5)
-        assert label.dtype in (xp.int32, xp.int64)
-        # Shouldn't raise an exception
-        ndimage.find_objects(label)
+def test_label_default_dtype():
+    test_array = np.random.rand(10, 10)
+    label, no_features = ndimage.label(test_array > 0.5)
+    assert_(label.dtype in (np.int32, np.int64))
+    # Shouldn't raise an exception
+    ndimage.find_objects(label)
 
 
 def test_find_objects01():
@@ -1198,8 +1188,6 @@ def test_stat_funcs_2d():
     assert_array_equal(max, [9, 5])
 
 
-@skip_xp_backends("cupy", reasons=["no watershed_ift on CuPy"],
-                  cpu_only=True, exceptions=['cupy', 'jax.numpy'],)
 class TestWatershedIft:
 
     def test_watershed_ift01(self):
@@ -1399,11 +1387,7 @@ class TestWatershedIft:
                     [-1, -1, -1, -1, -1, -1, -1]]
         assert_array_almost_equal(out, expected)
 
-    @skip_xp_backends(
-        "cupy", "pytorch", reasons=["no watershed_ift on CuPy", "torch.uint16"],
-        cpu_only=True, exceptions=['cupy', 'jax.numpy'],
-    )
-    def test_watershed_ift08(self, xp):
+    def test_watershed_ift08(self):
         # Test cost larger than uint8. See gh-10069.
         data = np.array([[256, 0],
                          [0, 0]], np.uint16)
@@ -1414,11 +1398,7 @@ class TestWatershedIft:
                     [1, 1]]
         assert_array_almost_equal(out, expected)
 
-    @skip_xp_backends(
-        "cupy", "pytorch", reasons=["no watershed_ift on CuPy", "torch.uint16"],
-        cpu_only=True, exceptions=['cupy', 'jax.numpy'],
-    )
-    def test_watershed_ift09(self, xp):
+    def test_watershed_ift09(self):
         # Test large cost. See gh-19575
         data = np.array([[np.iinfo(np.uint16).max, 0],
                          [0, 0]], np.uint16)

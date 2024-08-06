@@ -17,9 +17,7 @@ from scipy.interpolate import (
 
 
 def check_shape(interpolator_cls, x_shape, y_shape, deriv_shape=None, axis=0,
-                extra_args=None):
-    if extra_args is None:
-        extra_args = {}
+                extra_args={}):
     np.random.seed(1234)
 
     x = [-1, 0, 1, 2, 3, 4]

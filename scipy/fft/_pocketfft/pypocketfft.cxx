@@ -12,7 +12,6 @@
  *  \author Peter Bell
  */
 
-// Note: do not reorder, pybind11.h must come first (it includes Python.h)
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
@@ -757,7 +756,7 @@ out : int
 
 } // unnamed namespace
 
-PYBIND11_MODULE(pypocketfft, m, py::mod_gil_not_used())
+PYBIND11_MODULE(pypocketfft, m)
   {
   using namespace pybind11::literals;
 

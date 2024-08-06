@@ -2076,6 +2076,8 @@ class Delaunay(_QhullUser):
 
         Parameters
         ----------
+        tri : DelaunayInfo
+            Delaunay triangulation
         xi : ndarray of double, shape (..., ndim)
             Points to locate
         bruteforce : bool, optional
@@ -2110,9 +2112,8 @@ class Delaunay(_QhullUser):
 
         xi = np.asanyarray(xi)
 
-        with cython.boundscheck(True):
-            if xi.shape[-1] != self.ndim:
-                raise ValueError("wrong dimensionality in xi")
+        if xi.shape[-1] != self.ndim:
+            raise ValueError("wrong dimensionality in xi")
 
         xi_shape = xi.shape
         xi = xi.reshape(-1, xi.shape[-1])

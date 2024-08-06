@@ -1,7 +1,7 @@
 #pragma once
 
 #include "scipy_dll.h"
-#include "xsf/error.h"
+#include "special/error.h"
 
 
 #ifdef __cplusplus

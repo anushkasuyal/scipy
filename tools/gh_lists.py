@@ -47,7 +47,6 @@ def main():
         print()
 
         def backtick_repl(matchobj):
-            """repl to add an escaped space following a code block if needed"""
             if matchobj.group(2) != ' ':
                 post = '\ ' + matchobj.group(2)
             else:
@@ -56,36 +55,22 @@ def main():
 
         for issue in items:
             msg = "* `#{0} <{1}>`__: {2}"
-            # sanitize whitespace
+            # sanitize whitespace, `, and *
             title = re.sub("\\s+", " ", issue.title.strip())
-
-            # substitute any single backtick not adjacent to a backtick
-            # for a double backtick
-            title = re.sub("(?P<pre>(?:^|(?<=[^`])))`(?P<post>(?=[^`]|$))",
-                           "\g<pre>``\g<post>",
-                           title)
-            # add an escaped space if code block is not followed by a space
+            title = re.sub("([^`]|^)`([^`]|$)", "\g<1>``\g<2>", title)
             title = re.sub("``(.*?)``(.)", backtick_repl, title)
-
-            # sanitize asterisks
             title = title.replace('*', '\\*')
-
             if len(title) > 60:
                 remainder = re.sub("\\s.*$", "...", title[60:])
                 if len(remainder) > 20:
-                    # just use the first 80 characters, with ellipses.
-                    # note: this was previously bugged,
+                    # this was previously bugged,
                     # assigning to `remainder` rather than `title`
                     title = title[:80] + "..."
                 else:
-                    # use the first 60 characters and the next word
                     title = title[:60] + remainder
-
                 if title.count('`') % 4 != 0:
-                    # ellipses have cut in the middle of a code block,
-                    # so finish the code block before the ellipses
+                    # ellipses have cut in the middle of a code block
                     title = title[:-3] + '``...'
-
             msg = msg.format(issue.id, issue.url, title)
             print(msg)
         print()

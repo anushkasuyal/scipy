@@ -42,8 +42,7 @@ def pytest_configure(config):
         config.addinivalue_line(
             "markers", 'fail_slow: mark a test for a non-default timeout failure')
     config.addinivalue_line("markers",
-        "skip_xp_backends(*backends, reasons=None, np_only=False, cpu_only=False, "
-        "exceptions=None): "
+        "skip_xp_backends(*backends, reasons=None, np_only=False, cpu_only=False): "
         "mark the desired skip configuration for the `skip_xp_backends` fixture.")
 
 
@@ -203,9 +202,6 @@ def skip_xp_backends(xp, request):
         There is no need to provide any ``backends`` in this case,
         but any ``backends`` will also be skipped on the CPU.
         Default: ``False``.
-    exceptions : list, optional
-        A list of exceptions for use with `cpu_only`. This should be provided
-        when delegation is implemented for some, but not all, non-CPU backends.
     """
     if "skip_xp_backends" not in request.keywords:
         return
@@ -213,34 +209,21 @@ def skip_xp_backends(xp, request):
     kwargs = request.keywords["skip_xp_backends"].kwargs
     np_only = kwargs.get("np_only", False)
     cpu_only = kwargs.get("cpu_only", False)
-    exceptions = kwargs.get("exceptions", None)
-    
-    # input validation
-    if np_only and cpu_only:
-        raise ValueError("at most one of `np_only` and `cpu_only` should be provided")
-    if exceptions and not cpu_only:
-        raise ValueError("`exceptions` is only valid alongside `cpu_only`")
-
     if np_only:
         reasons = kwargs.get("reasons", ["do not run with non-NumPy backends."])
-        if len(reasons) > 1:
-            raise ValueError("please provide a singleton list to `reasons` "
-                             "when using `np_only`")
         reason = reasons[0]
         if xp.__name__ != 'numpy':
             pytest.skip(reason=reason)
         return
     if cpu_only:
-        reason = ("no array-agnostic implementation or delegation available "
-                  "for this backend and device")
-        exceptions = [] if exceptions is None else exceptions
+        reason = "do not run with `SCIPY_ARRAY_API` set and not on CPU"
         if SCIPY_ARRAY_API and SCIPY_DEVICE != 'cpu':
-            if xp.__name__ == 'cupy' and 'cupy' not in exceptions:
+            if xp.__name__ == 'cupy':
                 pytest.skip(reason=reason)
-            elif xp.__name__ == 'torch' and 'torch' not in exceptions:
+            elif xp.__name__ == 'torch':
                 if 'cpu' not in xp.empty(0).device.type:
                     pytest.skip(reason=reason)
-            elif xp.__name__ == 'jax.numpy' and 'jax.numpy' not in exceptions:
+            elif xp.__name__ == 'jax.numpy':
                 for d in xp.empty(0).devices():
                     if 'cpu' not in d.device_kind:
                         pytest.skip(reason=reason)

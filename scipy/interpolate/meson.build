@@ -174,7 +174,6 @@ endif
 
 py3.install_sources([
     '__init__.py',
-    '_aaa.py',
     '_bsplines.py',
     '_cubic.py',
     '_fitpack_impl.py',

@@ -6,11 +6,6 @@ from numpy.testing import assert_almost_equal
 
 from scipy import ndimage
 
-from scipy.conftest import array_api_compatible
-skip_xp_backends = pytest.mark.skip_xp_backends
-pytestmark = [array_api_compatible, pytest.mark.usefixtures("skip_xp_backends"),
-              skip_xp_backends(cpu_only=True, exceptions=['cupy', 'jax.numpy'],)]
-
 
 def get_spline_knot_values(order):
     """Knot values to the right of a B-spline's center."""

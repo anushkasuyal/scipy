@@ -175,16 +175,5 @@ static struct PyModuleDef _ctest = {
 PyMODINIT_FUNC
 PyInit__ctest(void)
 {
-    PyObject *module;
-
-    module = PyModule_Create(&_ctest);
-    if (module == NULL) {
-        return module;
-    }
-
-#if Py_GIL_DISABLED
-    PyUnstable_Module_SetGIL(module, Py_MOD_GIL_NOT_USED);
-#endif
-
-    return module;
+    return PyModule_Create(&_ctest);
 }
