@@ -11,6 +11,41 @@ from scipy.integrate import quad_vec
 from scipy.integrate._tanhsinh import _tanhsinh, _pair_cache, _nsum
 from scipy.stats._discrete_distns import _gen_harmonic_gt1
 
+
+def norm_pdf(x, xp=None):
+    xp = array_namespace(x) if xp is None else xp
+    return 1/(2*xp.pi)**0.5 * xp.exp(-x**2/2)
+
+def norm_logpdf(x, xp=None):
+    xp = array_namespace(x) if xp is None else xp
+    return -0.5*math.log(2*xp.pi) - x**2/2
+
+
+def _vectorize(xp):
+    # xp-compatible version of np.vectorize
+    # assumes arguments are all arrays of the same shape
+    def decorator(f):
+        def wrapped(*arg_arrays):
+            shape = arg_arrays[0].shape
+            arg_arrays = [xp_ravel(arg_array) for arg_array in arg_arrays]
+            res = []
+            for i in range(math.prod(shape)):
+                arg_scalars = [arg_array[i] for arg_array in arg_arrays]
+                res.append(f(*arg_scalars))
+            return res
+
+        return wrapped
+
+    return decorator
+
+
+@array_api_compatible
+@pytest.mark.usefixtures("skip_xp_backends")
+@pytest.mark.skip_xp_backends('array_api_strict', 'jax.numpy', 'cupy',
+                              reasons=['Currently uses fancy indexing assignment.',
+                                       'JAX arrays do not support item assignment.',
+                                       'cupy/cupy#8391',],
+                              cpu_only=True,) # cpu only until gh-21149 merges
 class TestTanhSinh:
 
     # Test problems from [1] Section 6
