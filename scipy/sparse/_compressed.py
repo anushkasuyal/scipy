@@ -254,6 +254,14 @@ class _cs_matrix(_data_matrix, _minmax_mixin, IndexMixin):
                 return self._scalar_binopt(other, operator.eq)
         # Dense other.
         elif isdense(other):
+            try:
+                np.broadcast_shapes(self.shape, other.shape)
+            except ValueError:
+                raise ValueError("inconsistent shapes")
+            
+            bshape = np.broadcast_shapes(self.shape, other.shape)
+            self = self.broadcast_to(bshape)
+            other = np.broadcast_to(other, bshape)
             return self.todense() == other
         # Pydata sparse other.
         elif is_pydata_spmatrix(other):
@@ -312,6 +320,14 @@ class _cs_matrix(_data_matrix, _minmax_mixin, IndexMixin):
                 return self._scalar_binopt(other, operator.ne)
         # Dense other.
         elif isdense(other):
+            try:
+                np.broadcast_shapes(self.shape, other.shape)
+            except ValueError:
+                raise ValueError("inconsistent shapes")
+            
+            bshape = np.broadcast_shapes(self.shape, other.shape)
+            self = self.broadcast_to(bshape)
+            other = np.broadcast_to(other, bshape)
             return self.todense() != other
         # Pydata sparse other.
         elif is_pydata_spmatrix(other):
@@ -360,6 +376,14 @@ class _cs_matrix(_data_matrix, _minmax_mixin, IndexMixin):
                 return self._scalar_binopt(other, op)
         # Dense other.
         elif isdense(other):
+            try:
+                np.broadcast_shapes(self.shape, other.shape)
+            except ValueError:
+                raise ValueError("inconsistent shapes")
+            
+            bshape = np.broadcast_shapes(self.shape, other.shape)
+            self = self.broadcast_to(bshape)
+            other = np.broadcast_to(other, bshape)
             return op(self.todense(), other)
         # Sparse other.
         elif issparse(other):
@@ -456,10 +480,6 @@ class _cs_matrix(_data_matrix, _minmax_mixin, IndexMixin):
         oM, oN = other._shape_as_2d
         self = self.reshape(sM, sN).tocsr()
         other = other.reshape(oM, oN).tocsr()
-        try:
-            np.broadcast_shapes(self.shape, other.shape)
-        except ValueError:
-            raise ValueError("inconsistent shapes")
         
         bshape = np.broadcast_shapes(self.shape, other.shape)
         self = self.broadcast_to(bshape)
@@ -479,10 +499,6 @@ class _cs_matrix(_data_matrix, _minmax_mixin, IndexMixin):
         oM, oN = other._shape_as_2d
         self = self.reshape(sM, sN).tocsr()
         other = other.reshape(oM, oN).tocsr()
-        try:
-            np.broadcast_shapes(self.shape, other.shape)
-        except ValueError:
-            raise ValueError("inconsistent shapes")
         
         bshape = np.broadcast_shapes(self.shape, other.shape)
         self = self.broadcast_to(bshape)
