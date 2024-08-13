@@ -594,20 +594,10 @@ class _coo_base(_data_matrix, _minmax_mixin):
     #######################
 
     def _add_dense(self, other):
-        if other.shape != self.shape:
-            try:
-                # This will raise an error if the shapes are not broadcastable
-                np.broadcast_shapes(self.shape, other.shape)
-            except ValueError:
-                raise ValueError(f'inconsistent shapes ({self.shape} and {other.shape})')
-        bshape = np.broadcast_shapes(self.shape, other.shape)
-        self = self.broadcast_to(bshape)
-        other = np.broadcast_to(other, bshape)
         dtype = upcast_char(self.dtype.char, other.dtype.char)
         result = np.array(other, dtype=dtype, copy=True)
         fortran = int(result.flags.f_contiguous)
-        if self.ndim < 3 and ((issparse(other) and other.ndim < 3) \
-                              or len(np.asarray(other).shape) < 3):
+        if self.ndim < 3 and len(other.shape) < 3:
             M, N = self._shape_as_2d
             coo_todense(M, N, self.nnz, self.row, self.col, self.data,
                         result.ravel('A'), fortran)
@@ -620,7 +610,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
 
     def _add_sparse(self, other):
         if self.ndim < 3 and ((issparse(other) and other.ndim < 3) \
-                              or len(np.asarray(other).shape) < 3):
+                              or (not issparse(other) and len(np.asarray(other).shape) < 3)):
             return _data_matrix._add_sparse(self, other)
 
         if other.shape != self.shape:
@@ -640,8 +630,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
 
     
     def _sub_sparse(self, other):
-        if self.ndim < 3 and ((issparse(other) and other.ndim < 3) \
-                              or len(np.asarray(other).shape) < 3):
+        if self.ndim < 3 and other.ndim < 3:
             return _data_matrix._sub_sparse(self, other)
 
         if other.shape != self.shape:
@@ -661,8 +650,8 @@ class _coo_base(_data_matrix, _minmax_mixin):
     
 
     def _matmul_vector(self, other):
-        if self.ndim < 3 and ((issparse(other) and other.ndim < 3) \
-                              or len(np.asarray(other).shape) < 3):
+        if self.ndim < 3 and ((isdense(other) and len(other.shape) < 3) \
+                              or (not issparse(other) and not isdense(other) and len(np.asarray(other).shape) < 3)):
             result_shape = self.shape[0] if self.ndim > 1 else 1
             result = np.zeros(result_shape,
                               dtype=upcast_char(self.dtype.char, other.dtype.char))
@@ -696,7 +685,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
 
     def _matmul_dispatch(self, other):
         if self.ndim < 3 and ((issparse(other) and other.ndim < 3) \
-                              or len(np.asarray(other).shape) < 3):
+                              or (not issparse(other) and len(np.asarray(other).shape) < 3)):
             return _data_matrix._matmul_dispatch(self, other)
         
         N = self.shape[-1]
@@ -769,7 +758,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
     def _matmul_multivector(self, other):
         result_dtype = upcast_char(self.dtype.char, other.dtype.char)
         if self.ndim < 3 and ((issparse(other) and other.ndim < 3) \
-                              or len(np.asarray(other).shape) < 3):
+                              or (not issparse(other) and len(np.asarray(other).shape) < 3)):
             if self.ndim == 2:
                 result_shape = (self.shape[0], other.shape[1])
                 col = self.col
