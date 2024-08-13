@@ -595,7 +595,14 @@ class _coo_base(_data_matrix, _minmax_mixin):
 
     def _add_dense(self, other):
         if other.shape != self.shape:
-            raise ValueError(f'Incompatible shapes ({self.shape} and {other.shape})')
+            try:
+                # This will raise an error if the shapes are not broadcastable
+                np.broadcast_shapes(self.shape, other.shape)
+            except ValueError:
+                raise ValueError(f'inconsistent shapes ({self.shape} and {other.shape})')
+        bshape = np.broadcast_shapes(self.shape, other.shape)
+        self = self.broadcast_to(bshape)
+        other = np.broadcast_to(other, bshape)
         dtype = upcast_char(self.dtype.char, other.dtype.char)
         result = np.array(other, dtype=dtype, copy=True)
         fortran = int(result.flags.f_contiguous)
@@ -618,12 +625,20 @@ class _coo_base(_data_matrix, _minmax_mixin):
     
 
     def _add_sparse(self, other):
-        if self.ndim < 3:
+        if self.ndim < 3 and ((issparse(other) and other.ndim < 3) \
+                              or len(np.asarray(other).shape) < 3):
             return self.tocsr()._add_sparse(other)
 
         if other.shape != self.shape:
-            raise ValueError(f'Incompatible shapes ({self.shape} and {other.shape})')
+            try:
+                # This will raise an error if the shapes are not broadcastable
+                np.broadcast_shapes(self.shape, other.shape)
+            except ValueError:
+                raise ValueError(f'inconsistent shapes ({self.shape} and {other.shape})')
         other = self.__class__(other)
+        bshape = np.broadcast_shapes(self.shape, other.shape)
+        self = self.broadcast_to(bshape)
+        other = other.broadcast_to(bshape)
         new_data = np.concatenate((self.data, other.data))
         new_coords = tuple(np.concatenate((self.coords, other.coords), axis=1))
         A = self.__class__((new_data, new_coords), shape=self.shape)         
@@ -631,12 +646,20 @@ class _coo_base(_data_matrix, _minmax_mixin):
 
     
     def _sub_sparse(self, other):
-        if self.ndim < 3:
+        if self.ndim < 3 and ((issparse(other) and other.ndim < 3) \
+                              or len(np.asarray(other).shape) < 3):
             return self.tocsr()._sub_sparse(other)
 
         if other.shape != self.shape:
-            raise ValueError(f'Incompatible shapes ({self.shape} and {other.shape})')
+            try:
+                # This will raise an error if the shapes are not broadcastable
+                np.broadcast_shapes(self.shape, other.shape)
+            except ValueError:
+                raise ValueError(f'inconsistent shapes ({self.shape} and {other.shape})')
         other = self.__class__(other)
+        bshape = np.broadcast_shapes(self.shape, other.shape)
+        self = self.broadcast_to(bshape)
+        other = other.broadcast_to(bshape)
         new_data = np.concatenate((self.data, -other.data))
         new_coords = tuple(np.concatenate((self.coords, other.coords), axis=1))
         A = coo_array((new_data, new_coords), shape=self.shape)
@@ -1108,6 +1131,9 @@ class _coo_base(_data_matrix, _minmax_mixin):
 
 
     def broadcast_to(self, new_shape):
+        if self.shape == new_shape:
+            return self.copy()
+
         old_shape = self.shape
 
         # Check if the new shape is compatible for broadcasting
