@@ -1357,98 +1357,56 @@ class _coo_base(_data_matrix, _minmax_mixin):
         else:
             return NotImplemented
 
+    def _find_max_or_min(self, axis, out, _max_or_min, _max_or_min_axis):
+        zero = self.dtype.type(0)
+        if axis is None:
+            return _max_or_min((*self.data, zero))
+        
+        if not isinstance(axis, (int, tuple)):
+            raise ValueError("'axis' should be int/tuple of ints")
+        
+        if axis == ():
+            return self.copy()
+        
+        if type(axis) is int:
+            axis = [axis]
+        
+        if any(ax >= self.ndim or ax < -self.ndim for ax in axis):
+            raise ValueError("axis out of range")
+        
+        axis = [ax if ax>=0 else ax+self.ndim for ax in axis]
+
+        # Check for duplicates
+        if len(axis) != len(set(axis)):
+            raise ValueError("duplicate value in 'axis'")
+
+        if len(axis) == self.ndim:
+            return _max_or_min((*self.data, zero))
+        
+        non_axis_coords = _ravel_non_reduced_axes(self.coords, self.shape, axis)
+        axis_coords = np.ravel_multi_index(np.array(self.coords)[axis, :], [self.shape[ax] for ax in axis])
+        coords_2d = np.vstack((non_axis_coords, axis_coords))
+
+        result_shape = tuple(self.shape[ax] for ax in range(self.ndim) if ax not in axis)
+        shape_2d = (math.prod(result_shape), math.prod([self.shape[ax] for ax in axis]))
+
+        self = coo_array((self.data, coords_2d), shape_2d)
+        res = (self._min_or_max(1, out, _max_or_min_axis))
+        unraveled_coords = np.concatenate(np.unravel_index(res.coords, result_shape))
+        
+        return (coo_array((res.data, unraveled_coords), result_shape))
 
     def max(self, axis=None, out=None):
-        ravelled_coords = _ravel_non_reduced_axes(self.coords, self.shape, axis)
-        coords_2d = np.vstack((ravelled_coords, np.ravel_multi_index(np.array(self.coords)[axis, :], [self.shape[ax] for ax in axis])))
-        original_shape = tuple(self.shape[ax] for ax in range(self.ndim) if ax not in axis)
-        ravel_coords_shape = (math.prod(original_shape), math.prod([self.shape[ax] for ax in axis]))
-        self = coo_array((self.data, coords_2d), ravel_coords_shape)
-        res = (self._min_or_max(1, out, np.maximum))
-        unraveled_coords = np.concatenate(np.unravel_index(res.coords, original_shape))
-        print((unraveled_coords))
-        print(res.data)
-        return (coo_array((res.data, unraveled_coords), original_shape))
+        return self._find_max_or_min(axis, out, np.max, np.maximum)
     
-
     def min(self, axis=None, out=None):
-        return self._min_or_max(axis, out, np.minimum)
-
+        return self._find_max_or_min(axis, out, np.min, np.minimum)
+    
     def nanmax(self, axis=None, out=None):
-        """
-        Return the maximum of the array/matrix or maximum along an axis, ignoring any
-        NaNs. This takes all elements into account, not just the non-zero
-        ones.
-
-        .. versionadded:: 1.11.0
-
-        Parameters
-        ----------
-        axis : {-2, -1, 0, 1, None} optional
-            Axis along which the maximum is computed. The default is to
-            compute the maximum over all elements, returning
-            a scalar (i.e., `axis` = `None`).
-
-        out : None, optional
-            This argument is in the signature *solely* for NumPy
-            compatibility reasons. Do not pass in anything except
-            for the default value, as this argument is not used.
-
-        Returns
-        -------
-        amax : coo_matrix or scalar
-            Maximum of `a`. If `axis` is None, the result is a scalar value.
-            If `axis` is given, the result is a sparse.coo_matrix of dimension
-            ``a.ndim - 1``.
-
-        See Also
-        --------
-        nanmin : The minimum value of a sparse array/matrix along a given axis,
-                 ignoring NaNs.
-        max : The maximum value of a sparse array/matrix along a given axis,
-              propagating NaNs.
-        numpy.nanmax : NumPy's implementation of 'nanmax'.
-
-        """
-        return self._min_or_max(axis, out, np.fmax)
+        return self._find_max_or_min(axis, out, np.nanmax, np.fmax)
 
     def nanmin(self, axis=None, out=None):
-        """
-        Return the minimum of the array/matrix or minimum along an axis, ignoring any
-        NaNs. This takes all elements into account, not just the non-zero
-        ones.
-
-        .. versionadded:: 1.11.0
-
-        Parameters
-        ----------
-        axis : {-2, -1, 0, 1, None} optional
-            Axis along which the minimum is computed. The default is to
-            compute the minimum over all elements, returning
-            a scalar (i.e., `axis` = `None`).
-
-        out : None, optional
-            This argument is in the signature *solely* for NumPy
-            compatibility reasons. Do not pass in anything except for
-            the default value, as this argument is not used.
-
-        Returns
-        -------
-        amin : coo_matrix or scalar
-            Minimum of `a`. If `axis` is None, the result is a scalar value.
-            If `axis` is given, the result is a sparse.coo_matrix of dimension
-            ``a.ndim - 1``.
-
-        See Also
-        --------
-        nanmax : The maximum value of a sparse array/matrix along a given axis,
-                 ignoring NaNs.
-        min : The minimum value of a sparse array/matrix along a given axis,
-              propagating NaNs.
-        numpy.nanmin : NumPy's implementation of 'nanmin'.
-
-        """
-        return self._min_or_max(axis, out, np.fmin)
+        return self._find_max_or_min(axis, out, np.nanmin, np.fmin)
 
     def argmax(self, axis=None, out=None):
         """Return indices of maximum elements along an axis.
@@ -1662,28 +1620,6 @@ def _ravel_coords(coords, shape, order='C'):
             raise ValueError("'order' must be 'C' or 'F'")
     return np.ravel_multi_index(coords, shape, order=order)
 
-def _validateaxis(axis) -> None:
-    if axis is None:
-        return
-    axis_type = type(axis)
-
-    # In NumPy, you can pass in tuples for 'axis', but they are
-    # not very useful for sparse matrices given their limited
-    # dimensions, so let's make it explicit that they are not
-    # allowed to be passed in
-    if isinstance(axis, tuple):
-        raise TypeError("Tuples are not accepted for the 'axis' parameter. "
-                        "Please pass in one of the following: "
-                        "{-2, -1, 0, 1, None}.")
-
-    # If not a tuple, check that the provided axis is actually
-    # an integer and raise a TypeError similar to NumPy's
-    if not np.issubdtype(np.dtype(axis_type), np.integer):
-        raise TypeError(f"axis must be an integer, not {axis_type.__name__}")
-
-    if not (-2 <= axis <= 1):
-        raise ValueError("axis out of range")
-    
 
 def isspmatrix_coo(x):
     """Is `x` of coo_matrix type?
