@@ -54,7 +54,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
                     shape = tuple(operator.index(np.max(idx)) + 1
                                   for idx in coords)
                 self._shape = check_shape(shape, allow_1d=is_array,
-                                          allow_nd=(is_array and len(shape)>=3))
+                                          allow_nd=is_array)
                 idx_dtype = self._get_index_dtype(coords,
                                                   maxval=max(self.shape),
                                                   check_contents=True)
@@ -88,7 +88,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
                 self._shape = check_shape(M.shape, allow_1d=is_array, allow_nd=is_array)
                 if shape is not None:
                     if check_shape(shape, allow_1d=is_array,
-                        allow_nd=(is_array and len(self._shape)>=3)) != self._shape:
+                        allow_nd=is_array) != self._shape:
                         message = f'inconsistent shapes: {shape} != {self._shape}'
                         raise ValueError(message)
 
@@ -331,8 +331,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
 
         """
         if self.ndim != 2:
-            raise ValueError('Cannot convert.'
-                             f"csc format sparse arrays must be 2D. Got {self.ndim}D")
+            raise ValueError(f'Cannot convert. CSC format must be 2D. Got {self.ndim}D')
         if self.nnz == 0:
             return self._csc_container(self.shape, dtype=self.dtype)
         else:
@@ -365,8 +364,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
 
         """
         if self.ndim > 2:
-            raise ValueError('Cannot convert.'
-                             f"csr format sparse arrays must be 2D. Got {self.ndim}D")
+            raise ValueError(f'Cannot convert. CSR must be 1D or 2D. Got {self.ndim}D')
         if self.nnz == 0:
             return self._csr_container(self.shape, dtype=self.dtype)
         else:
@@ -416,8 +414,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
 
     def todia(self, copy=False):
         if self.ndim != 2:
-            raise ValueError('Cannot convert.'
-                             f"dia format sparse arrays must be 2D. Got {self.ndim}D")
+            raise ValueError(f'Cannot convert. DIA format must be 2D. Got {self.ndim}D')
         self.sum_duplicates()
         ks = self.col - self.row  # the diagonal for each nonzero
         diags, diag_idx = np.unique(ks, return_inverse=True)
@@ -441,8 +438,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
 
     def todok(self, copy=False):
         if self.ndim > 2:
-            raise ValueError('Cannot convert. dok format sparse arrays must be'
-                             f" 2D or 1D. Got {self.ndim}D")
+            raise ValueError(f'Cannot convert. DOK must be 1D or 2D. Got {self.ndim}D')
         self.sum_duplicates()
         dok = self._dok_container(self.shape, dtype=self.dtype)
         # ensure that 1d coordinates are not tuples
