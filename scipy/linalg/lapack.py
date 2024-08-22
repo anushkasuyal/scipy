@@ -345,9 +345,6 @@ All functions
    chetrf_lwork
    zhetrf_lwork
 
-   chetrs
-   zhetrs
-
    chfrk
    zhfrk
 
@@ -663,11 +660,6 @@ All functions
    csytrf_lwork
    zsytrf_lwork
 
-   ssytrs
-   dsytrs
-   csytrs
-   zsytrs
-
    stbtrs
    dtbtrs
    ctbtrs
@@ -715,11 +707,6 @@ All functions
    dtpttr
    ctpttr
    ztpttr
-
-   strcon
-   dtrcon
-   ctrcon
-   ztrcon
 
    strexc
    dtrexc
@@ -805,11 +792,6 @@ All functions
    dgttrs
    cgttrs
    zgttrs
-
-   sgtcon
-   dgtcon
-   cgtcon
-   zgtcon
 
    stpqrt
    dtpqrt

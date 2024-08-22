@@ -252,14 +252,22 @@ def isshape(x, nonneg=False, *, allow_1d=False, allow_nd=False) -> bool:
     if ndim < 3:
         if ndim != 2 and not (allow_1d and ndim == 1):
             return False
-    elif not allow_nd:
-        return False
-    for d in x:
-        if not isintlike(d):
+        for d in x:
+            if not isintlike(d):
+                return False
+            if nonneg and d < 0:
+                return False
+        return True
+    else:
+        if not allow_nd:
             return False
-        if nonneg and d < 0:
-            return False
-    return True
+        for d in x:
+            if not isintlike(d):
+                return False
+            if nonneg and d < 0:
+                return False
+        return True
+
 
 
 def issequence(t) -> bool:
@@ -302,7 +310,7 @@ def validateaxis(axis) -> None:
 
 
 def check_shape(args, current_shape=None, *, allow_1d=False,
-                allow_nd=False):
+                allow_nd=False) -> tuple[int, ...]:
     """Imitate numpy.matrix handling of shape arguments
 
     Parameters
@@ -341,17 +349,25 @@ def check_shape(args, current_shape=None, *, allow_1d=False,
         new_shape = tuple(operator.index(arg) for arg in args)
 
     if current_shape is None:
-        if not allow_1d and len(new_shape) != 2:
-            raise ValueError('shape must be a 2-tuple of positive integers')
-
-        if not allow_nd and len(new_shape) > 2:
+        if len(new_shape) < 3:
             if allow_1d:
-                raise ValueError('shape must be a 1- or 2-tuple of positive integers')
-            else:
+                if len(new_shape) not in (1, 2):
+                    raise ValueError('shape must be a 1- or 2-tuple of positive '
+                                     'integers')
+            elif len(new_shape) != 2:
                 raise ValueError('shape must be a 2-tuple of positive integers')
-
-        if any(d < 0 for d in new_shape):
-            raise ValueError("'shape' elements cannot be negative")
+            if any(d < 0 for d in new_shape):
+                raise ValueError("'shape' elements cannot be negative")
+        else: # dim >= 3
+            if allow_nd:
+                if any(d < 0 for d in new_shape):
+                    raise ValueError("'shape' elements cannot be negative")
+            else:
+                if allow_1d:
+                    raise ValueError('shape must be a 1- or 2-tuple of positive '
+                                     'integers')
+                else:
+                    raise ValueError('shape must be a 2-tuple of positive integers')
     else:
         # Check the current size only if needed
         current_size = prod(current_shape)
@@ -375,12 +391,14 @@ def check_shape(args, current_shape=None, *, allow_1d=False,
         else:
             raise ValueError('can only specify one unknown dimension')
 
-    ndim_new = len(new_shape)
-    if not allow_1d and ndim_new != 2:
-        raise ValueError('shape must be two-dimensional')
-
-    if ndim_new >= 3 and allow_1d and not allow_nd:
-        raise ValueError('shape must be one- or two-dimensional')
+    if len(new_shape) < 3:
+            if len(new_shape) != 2 and not (allow_1d and len(new_shape) == 1):
+                raise ValueError('matrix shape must be two-dimensional')
+    elif len(new_shape) >= 3:
+        if not allow_nd and not allow_1d:
+            raise ValueError('matrix shape must be two-dimensional')
+        if not allow_nd and allow_1d:
+            raise ValueError('matrix shape must be one or two-dimensional')
 
     return new_shape
 

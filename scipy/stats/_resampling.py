@@ -8,7 +8,8 @@ from dataclasses import dataclass
 import inspect
 
 from scipy._lib._util import check_random_state, _rename_parameter, rng_integers
-from scipy._lib._array_api import array_namespace, is_numpy, xp_moveaxis_to_end
+from scipy._lib._array_api import (array_namespace, is_numpy, xp_minimum,
+                                   xp_clip, xp_moveaxis_to_end)
 from scipy.special import ndtr, ndtri, comb, factorial
 
 from ._common import ConfidenceInterval
@@ -995,7 +996,7 @@ def monte_carlo_test(data, rvs, statistic, *, vectorized=None,
     def two_sided(null_distribution, observed):
         pvalues_less = less(null_distribution, observed)
         pvalues_greater = greater(null_distribution, observed)
-        pvalues = xp.minimum(pvalues_less, pvalues_greater) * 2
+        pvalues = xp_minimum(pvalues_less, pvalues_greater) * 2
         return pvalues
 
     compare = {"less": less,
@@ -1003,7 +1004,7 @@ def monte_carlo_test(data, rvs, statistic, *, vectorized=None,
                "two-sided": two_sided}
 
     pvalues = compare[alternative](null_distribution, observed)
-    pvalues = xp.clip(pvalues, 0., 1.)
+    pvalues = xp_clip(pvalues, 0., 1., xp=xp)
 
     return MonteCarloTestResult(observed, pvalues, null_distribution)
 

@@ -6,8 +6,6 @@ import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 
 import scipy._lib._elementwise_iterative_method as eim
-from scipy._lib._array_api import (array_namespace, xp_assert_close, xp_assert_equal,
-                                   xp_size, xp_ravel, xp_copy)
 from scipy import special, stats
 from scipy.integrate import quad_vec
 from scipy.integrate._tanhsinh import _tanhsinh, _pair_cache, _nsum
