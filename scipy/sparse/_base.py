@@ -1212,10 +1212,12 @@ class _spbase:
                 np.ones((N, 1), dtype=res_dtype)
             )
 
+        ret = ret.sum(axis=axis, dtype=dtype, out=out)
         if out is not None and out.shape != ret.shape:
+            print(out, ret,  ret.sum(axis=axis, dtype=dtype, out=out)
+)
             raise ValueError("dimensions do not match")
-
-        return ret.sum(axis=axis, dtype=dtype, out=out)
+        return ret
 
     def mean(self, axis=None, dtype=None, out=None):
         """
