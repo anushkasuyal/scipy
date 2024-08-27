@@ -1819,7 +1819,6 @@ def _extract_block_diag(self, shape):
     return coo_array((data, tuple(new_coords)), shape=shape)
 
 
-
 def _determine_default_axes(ndim_a, ndim_b, axes):
     """
     Determine the default axes for tensordot-like operation.
