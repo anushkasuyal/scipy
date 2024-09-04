@@ -4,7 +4,7 @@ from numpy.testing import (assert_equal, assert_array_equal,
 import pytest
 from scipy.linalg import block_diag
 from scipy.sparse import coo_array, random_array, SparseEfficiencyWarning
-from .._coo import _block_diag, _extract_block_diag, hstack, vstack
+from .._coo import _block_diag, _extract_block_diag, hstack, vstack, kron
 from .._base import sparray
 
 def test_shape_constructor():
@@ -1176,3 +1176,19 @@ def test_pow_abs_round():
     assert_allclose((a**7).toarray(), np.power(a.toarray(), 7))
     assert_allclose(round(a).toarray(), np.round(a.toarray()))
     assert_allclose(abs(a).toarray(), np.abs(a.toarray()))
+
+
+kron_shapes = [
+    ((3,4), (3,4)), ((1,4,5,3,7,8), (7,8)),
+    ((3,4,6), (3,4,6)), ((6,8,3), (8,3)),
+    ((2,), (3,4,2)), ((3,4,2), (5,3,4,2)),
+]
+
+@pytest.mark.parametrize(('a_shape', 'b_shape'), kron_shapes)
+def test_kron(a_shape, b_shape):
+    rng = np.random.default_rng(23409823)
+    a = random_array(a_shape, density=0.6, random_state=rng, dtype=int)
+    b = random_array(b_shape, density=0.6, random_state=rng, dtype=int)
+    res = kron(a, b)
+    exp = np.kron(a.toarray(), b.toarray())
+    assert_equal(res.toarray(), exp)

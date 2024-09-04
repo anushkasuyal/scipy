@@ -1719,6 +1719,33 @@ class _coo_base(_data_matrix, _minmax_mixin):
         return self._maximum_minimum_coo(other, 'minimum')
 
 
+def kron(a, b):
+    # Ensure the arrays have the same number of dimensions
+    ndim = max(a.ndim, b.ndim)
+    a_shape = (1,) * (ndim - a.ndim) + a.shape
+    b_shape = (1,) * (ndim - b.ndim) + b.shape
+    
+    # Expand the coordinates of a and b to match ndim, by reshaping
+    a = a.reshape(a_shape)
+    b = b.reshape(b_shape)
+    
+    # Compute the new shape
+    new_shape = tuple(a_shape[i] * b_shape[i] for i in range(ndim))
+
+    # Use broadcasting to compute the new coordinates
+    a_coords_expanded = np.expand_dims(a.coords, axis=-1)  # shape (ndim, nnz_a, 1)
+    b_coords_expanded = np.expand_dims(b.coords, axis=-2)  # shape (ndim, 1, nnz_b)
+
+    new_coords = a_coords_expanded * np.array(b_shape).reshape(-1, 1, 1) + b_coords_expanded
+    new_coords = new_coords.reshape(ndim, -1)
+
+    # Compute the new data array using outer product
+    new_data = np.outer(a.data, b.data).ravel()
+
+    # Return the product array
+    return coo_array((new_data, new_coords), shape=new_shape)
+
+
 def vstack(arrays):
     # Ensure the input is a tuple of COO arrays
     if not isinstance(arrays, tuple):
