@@ -1134,3 +1134,33 @@ def test_kron(a_shape, b_shape):
     res = kron(a, b)
     exp = np.kron(a.toarray(), b.toarray())
     assert_equal(res.toarray(), exp)
+
+
+tensorsolve_shapes = [
+    ((6,6), (6,), (0,)),
+    ((6,6), (6,), None),
+    ((4,5,2,5,2), (4,5), None),
+    ((4,5,10,2), (4,5), None),
+    ((4,3,6,18,4), (4,3,6), None),
+    ((4,3,6,72,1), (4,3,6), None),
+    ((4,5,2,5,2), (2,5,2), (0, 1)),
+    ((6,5,2,5,3), (5,2,3), (0, 3)),
+    
+]
+@pytest.mark.parametrize(('a_shape', 'b_shape', 'axes'), tensorsolve_shapes)
+def test_tensorsolve(a_shape, b_shape, axes):
+    rng = np.random.default_rng(23409823)
+
+    sup = suppress_warnings()
+    sup.filter(SparseEfficiencyWarning)
+    
+    arr_a = random_array(a_shape, density=0.6, random_state=rng, dtype=int)
+    arr_b = random_array(b_shape, density=0.6, random_state=rng, dtype=int)
+
+    exp = np.linalg.tensorsolve(arr_a.toarray(), arr_b.toarray(), axes=axes)
+
+    with sup:
+        res = tensorsolve(arr_a, arr_b, axes=axes)
+    print(exp)
+    print(res)
+    assert_allclose(res, exp)
