@@ -801,102 +801,29 @@ class _coo_base(_data_matrix, _minmax_mixin):
 
         if self.ndim < 3 and (np.isscalar(other) or other.ndim<3):
             return _spbase.dot(self, other)
-        if isdense(other):
-            return self._dense_dot(other)
-        else:
-            if not (isinstance(self, (coo_array, coo_matrix)) or np.isscalar(self)):
-                raise TypeError("array must be in COO format")
-            if not (isinstance(other, (coo_array, coo_matrix)) or np.isscalar(other)):
-                raise TypeError("input must be a COO matrix/array or a scalar")
-
-            # Handle scalar multiplication
-            if np.isscalar(other):
-                return self * other
-
-            # Handle inner product of vectors (1-D arrays)
-            if self.ndim == 1 and other.ndim == 1:
-                if self.shape[0] != other.shape[0]:
-                    raise ValueError(f"shapes {self.shape} and {other.shape}"
-                                     " are not aligned for inner product")
-                return self @ other
+        
+        if not (isinstance(other, (coo_array, coo_matrix, np.ndarray)) or np.isscalar(other)):
+                raise TypeError("input must be a COO/dense array or a scalar")
             
-            # Handle matrix multiplication (2-D arrays)
-            if self.ndim == 2 and other.ndim == 2:
-                if self.shape[1] != other.shape[0]:
-                    raise ValueError(f"shapes {self.shape} and {other.shape}"
-                                     " are not aligned for matmul")
-                return self @ other
-            
-            return self._sparse_dot(other)
+        # Handle scalar multiplication
+        if np.isscalar(other):
+            return self * other
 
-    
-    def _sparse_dot(self, other):
-        self_is_1d = False
-        other_is_1d = False
-
-        # reshape to 2-D if self or other is 1-D
-        if self.ndim == 1:
-            self = self.reshape((1, self.shape[0])) # prepend 1 to shape
-            self_is_1d = True
-
-        if other.ndim == 1:
-            other = other.reshape((other.shape[0], 1)) # append 1 to shape
-            other_is_1d = True
-
-        if self.shape[-1] != other.shape[-2]:
+        # Handle inner product of vectors (1-D arrays)
+        if self.ndim == 1 and other.ndim == 1:
+            if self.shape[0] != other.shape[0]:
                 raise ValueError(f"shapes {self.shape} and {other.shape}"
-                                 " are not aligned for n-D dot")
+                                    " are not aligned for inner product")
+            return self @ other
         
-        # Prepare the tensors for dot operation
-        # Ravel non-reduced axes coordinates
-        self_raveled_coords = _ravel_non_reduced_axes(self.coords,
-                                                      self.shape, [self.ndim-1])
-        other_raveled_coords = _ravel_non_reduced_axes(other.coords,
-                                                       other.shape, [other.ndim-2])
+        # Handle matrix multiplication (2-D arrays)
+        if self.ndim == 2 and other.ndim == 2:
+            if self.shape[1] != other.shape[0]:
+                raise ValueError(f"shapes {self.shape} and {other.shape}"
+                                    " are not aligned for matmul")
+            return self @ other
 
-        # Get the shape of the non-reduced axes
-        og_shape_self = self.shape[:-1]
-        og_shape_other = other.shape[:-2] + other.shape[-1:]
-        
-        # Create 2D coords arrays
-        ravel_coords_shape_self = (math.prod(og_shape_self), self.shape[-1])
 
-        ravel_coords_shape_other = (other.shape[-2], math.prod(og_shape_other))
-        
-        
-        self_2d_coords = np.vstack((self_raveled_coords, self.coords[-1]))
-        other_2d_coords = np.vstack((other.coords[-2], other_raveled_coords))
-
-        self_2d = coo_array((self.data, self_2d_coords), ravel_coords_shape_self)
-        other_2d = coo_array((other.data, other_2d_coords), ravel_coords_shape_other)
-        
-        prod = (self_2d @ other_2d).tocoo() # routes via 2-D CSR
-
-        # Combine the shapes of the non-reduced axes
-        combined_shape = og_shape_self + og_shape_other
-
-        # Unravel the 2D coordinates to get multi-dimensional coordinates
-        unraveled_coords_self = np.unravel_index(np.array(prod.coords[0]),
-                                                 og_shape_self)
-        unraveled_coords_other = np.unravel_index(np.array(prod.coords[1]),
-                                                  og_shape_other)
-
-        nd_coords_a = np.array(unraveled_coords_self)
-        nd_coords_b = np.array(unraveled_coords_other)
-
-        prod_coords = np.concatenate((nd_coords_a, nd_coords_b))
-
-        prod_arr = coo_array((prod.data, prod_coords), combined_shape)
-        
-        # reshape back if a or b were originally 1-D
-        if self_is_1d:
-            prod_arr = prod_arr.reshape(combined_shape[1:])
-        if other_is_1d:
-            prod_arr = prod_arr.reshape(combined_shape[:-1])
-
-        return prod_arr
-    
-    def _dense_dot(self, other):
         self_is_1d = False
         other_is_1d = False
 
@@ -928,6 +855,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
             prod_arr = prod_arr.reshape(result_shape[:-1])
 
         return prod_arr
+
 
     def tensordot(self, other, axes=2):
         if not isdense(other) and not issparse(other):
