@@ -6,6 +6,7 @@ from scipy.linalg import block_diag
 from scipy.sparse import coo_array, random_array, SparseEfficiencyWarning
 from .._coo import _block_diag, _extract_block_diag, hstack, vstack, kron
 from .._base import sparray
+from scipy.sparse.linalg._dsolve.tensorsolve import tensorsolve
 
 def test_shape_constructor():
     empty1d = coo_array((3,))
@@ -1164,3 +1165,16 @@ def test_tensorsolve(a_shape, b_shape, axes):
     print(exp)
     print(res)
     assert_allclose(res, exp)
+
+
+@pytest.mark.parametrize(('shape', 'ax1', 'ax2', 'offset'),
+                         [((3,2,4,6,5), 0, 1, 0), ((3,2,4,6,5), 1, 4, 2),
+                          ((3,2,4,6,5), 4, 1, 2), ((6,4,8,1), 2, 3, 0),
+                          ((5, 4, 9), 0, 2, 2),  ((2,4,3,4,5), 4, 0, 1),
+                          ((2,4,3,4,5), 0, 4, 1), ((2,4,3,4,5), 2, 1, 2),])
+def test_nd_diagonal(shape, ax1, ax2, offset):
+    rng = np.random.default_rng(23409823)
+    arr = random_array(shape, density=0.6, random_state=rng, dtype=int)
+    a = arr.diagonalnd(axis1=ax1, axis2=ax2, offset=offset)
+    b = np.diagonal(arr.toarray(), axis1=ax1, axis2=ax2, offset=offset)
+    assert_equal(a.toarray(), b)
